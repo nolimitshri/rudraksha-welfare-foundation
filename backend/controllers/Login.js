@@ -8,28 +8,27 @@ const signIn = async (req, res, next) => {
     if (!username || !password) {
       throw new Error("Username and password are mandatory fields!");
     } else {
-
       const emp = await Employee.findOne({ username });
 
       if (!emp) {
         throw new Error("No employee with that username!");
+      } else {
+        const passwordMatch = await bcrypt.compare(password, emp.password);
+
+        if (!passwordMatch) {
+          throw new Error("Passwords doesn't match!");
+        } else {
+          const token = jwt.sign(
+            { username: emp.email, id: emp._id },
+            process.env.secret
+          );
+  
+          res.status(200).json({
+            success: true,
+            token: token,
+          });
+        }
       }
-
-      const passwordMatch = await bcrypt.compare(password, emp.password);
-      
-      if (!passwordMatch) {
-        throw new Error("Passwords doesn't match!");
-      }
-
-      const token = jwt.sign(
-        { username: emp.email, id: emp._id },
-        process.env.secret
-      );
-
-      res.status(200).json({
-        success: true,
-        token: token,
-      });
     }
   } catch (error) {
     res.json({
